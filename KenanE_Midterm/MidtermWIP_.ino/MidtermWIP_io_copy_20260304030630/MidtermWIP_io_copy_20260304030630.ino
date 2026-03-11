@@ -3,7 +3,7 @@ Kenan Esso
 MTEC 2280 Physical Computing
 Professor Ian Porkorny
 
-MIDTERM WIP
+MIDTERM
 
 Concept: Red Light/Green Light User Game Experience
 
@@ -22,7 +22,7 @@ No press	                    Nothing
 
 //Pins
 int buttonPin = 2;
-int redLED = 8;
+int redLED = 4;
 int greenLED = 9;
 int buzzer = 10;
 int potPin = A0;
@@ -61,6 +61,20 @@ void setup()
 
   // buzzer output
   pinMode(buzzer, OUTPUT);  
+
+  // Game starting countdown (three flashes to start)
+for (int i = 0; i < 3; i++)
+{
+  digitalWrite(redLED, HIGH);
+  digitalWrite(greenLED, HIGH);
+
+  delay(300);
+
+  digitalWrite(redLED, LOW);
+  digitalWrite(greenLED, LOW);
+
+  delay(300);
+}
 
 }
 
@@ -146,12 +160,6 @@ void loop()
     analogWrite(buzzer, 0);
 
   }
-
-
-
-
-
-
 
 }
 
