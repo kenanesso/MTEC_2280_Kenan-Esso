@@ -1,33 +1,34 @@
-/*
-  Kenan Esso 
-  Short Sketch #4 - Sensor to control a software sketch
+const int adcPin = 1; //sensor hooked up to GPIO Pin 1
+int adcRead = 0;  //variable to store our Analog-to-Digital Conversion value
 
-  Simple Analog Sensor Sender
-  Reads one analog sensor and sends the value to p5.js through Serial
+//software timer variables
+int lastTime = 0;
+int currentTime = 0;
+int timerInterval = 2;
 
-  Music Style Aesthetic reference from 
-  https://dev.to/devsatasurion/creative-coding-with-p5js-an-inclusive-javascript-library-4e55
-*/
-
-
-// Analog input pin
-int sensorPin = A0;
-
-// Variable to store the sensor value
-int sensorValue = 0;
-
-void setup() {
-  // Start serial communication
-  Serial.begin(9600);
+void setup() 
+{
+  Serial.begin(9600);     // Start serial communication @ 9600 baud rate
+  analogReadResolution(8);  //adjust adc read range to 0-255, 1-byte, 8-bit
 }
 
-void loop() {
-  // Read the analog sensor
-  sensorValue = analogRead(sensorPin);
+void loop() 
+{
+  //we don't want or need to send updates to serial port so often, so use a timer:
+  currentTime = millis(); //read current elapsed time
+  if (currentTime - lastTime >= timerInterval)  //if we have reached our timer interval...
+  {
+    lastTime = currentTime; //store current time as last time so we know when timer last occured
+    adcRead = analogRead(adcPin); //read sensor and assign to variable called adcRead
 
-  // Send the sensor value to the computer
-  Serial.println(sensorValue);
+    /*
+      NOTE: Uncomment Serial.println() OR Serial.write(), but not both!
+    */
 
-  // Small pause so data is easier to read
-  delay(30);
+    //Serial. println(adcRead); //to send human-readable data to Arduino Serial Monitor
+    Serial.write(adcRead);  //to send binary data to UART
+    
+    //code in here will only run every 2ms, freeing up our CPU for other tasks
+  }
+  //anything you add here will run more frequently than code inside of above if statement
 }
