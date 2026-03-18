@@ -1,104 +1,91 @@
 /*
- Kenan Esso 
-  Short Sketch #4 - Sensor to control a software p5.js sketch
+  Kenan Esso
+  Short Sketch #3 - Simple Music Visual
 
-  (Sensor Used: Potentiometer)
+  p5.SerialPort setup
+  Music Animation Inspiration: https://dev.to/devsatasurion/creative-coding-with-p5js-an-inclusive-javascript-library-4e55
 
-Music Style Aesthetic reference from 
-  https://dev.to/devsatasurion/creative-coding-with-p5js-an-inclusive-javascript-library-4e55
-  */
+  Potentiometer controls:
+  - circle size
+  - music bar height
+  - brightness of circle
+*/
 
+let serial; // declare serial object
+let portName = '/dev/tty.usbserial-1110'; // changed to my port
+let options = { baudRate: 9600 }; // matching the Arduino
 
-  // Variable to store the incoming sensor value
-let sensor = 0;
+let inData = 0; // incoming serial data
 
-// These are the variables for serial connection
-let port;
-let reader;
+function setup() {
+  // P5 SerialPort Setup
+  serial = new p5.SerialPort();
+  serial.on('list', printList);
+  serial.on('connected', serverConnected);
+  serial.on('open', portOpen);
+  serial.on('data', serialEvent);
+  serial.on('error', serialError);
+  serial.on('close', portClose);
 
-async function setup() {
-  // Create the canvas
-  createCanvas(600, 400);
+  serial.list();
+  serial.open(portName, options);
 
-  // Make a button so user can connect to ESP32
-  let button = createButton("Connect to ESP32");
-  button.position(10, 10);
-  button.mousePressed(connectSerial);
+  // Typical p5 setup
+  createCanvas(1500, 800);
+  textSize(50);
+  textAlign(CENTER, CENTER);
 }
 
 function draw() {
-  // Map sensor value to brightness
-  let level = map(sensor, 0, 4095, 0, 255);
+  // gray style background
+  background(100, 100, 100);
 
-  // Change background brightness with sensor
-  background(level * 0.3);
+  // map incoming value to circle size
+  let diameter = map(inData, 0, 255, 50, 250);
 
-  // Map sensor value to circle size
-  let circleSize = map(sensor, 0, 4095, 50, 200);
+  // map incoming value to bar height
+  let barHeight = map(inData, 0, 255, 20, 300);
 
-  // Draw main circle
-  fill(100, 200, 255);
-  ellipse(width / 2, height / 2, circleSize, circleSize);
+  // draw center circle
+  fill(inData, 150, 255);
+  noStroke();
+  circle(width / 2, height / 2 - 50, diameter);
 
-  // Map sensor value to bar height
-  let barHeight = map(sensor, 0, 4095, 10, height);
+  // draw 3 simple music bars
+  fill(200, 200, 200);
 
-  // Draw simple music-style bars
-  fill(255);
-  rect(100, height - barHeight, 30, barHeight);
-  rect(200, height - barHeight, 30, barHeight);
-  rect(300, height - barHeight, 30, barHeight);
+  rect(width / 2 - 90, height - 200, 40, -barHeight);
+  rect(width / 2 - 20, height - 200, 40, -barHeight);
+  rect(width / 2 + 50, height - 200, 40, -barHeight);
 
-  // Optional text showing sensor value
-  fill(255);
-  textSize(16);
-  text("Sensor: " + sensor, 20, 60);
+  // display incoming value
+  fill(0);
+  text("Value: " + inData, width / 2, height - 60);
 }
 
-// Function to connect browser to ESP32
-async function connectSerial() {
-  // Ask user to choose the serial port
-  port = await navigator.serial.requestPort();
-
-  // Open the selected port at 9600 baud
-  await port.open({ baudRate: 9600 });
-
-  // Create a decoder so incoming serial data becomes readable text
-  const decoder = new TextDecoderStream();
-  port.readable.pipeTo(decoder.writable);
-
-  // Create a reader to read the serial data
-  reader = decoder.readable.getReader();
-
-  // Start reading serial data
-  readSerial();
-}
-
-// Function that keeps reading sensor data
-async function readSerial() {
-  while (true) {
-    // Read one piece of incoming data
-    const { value, done } = await reader.read();
-
-    // If reading is finished, stop
-    if (done) {
-      reader.releaseLock();
-      break;
-    }
-
-    // If data exists
-    if (value) {
-      // This splits incoming text by lines
-      let lines = value.split("\n");
-
-      // Get the most recent full line
-      let lastLine = lines[lines.length - 2];
-
-      // If line is valid, turn it into a number
-      if (lastLine) {
-        sensor = Number(lastLine.trim());
-        console.log(sensor); // helps with debugging
-      }
-    }
+function printList(portList) {
+  print("List of Available Serial Ports:");
+  for (let i = 0; i < portList.length; i++) {
+    print(i + ": " + portList[i]);
   }
+}
+
+function serverConnected() {
+  print("CONNECTED TO SERVER");
+}
+
+function portOpen() {
+  print("SERIAL PORT OPEN");
+}
+
+function serialEvent() {
+  inData = Number(serial.read());
+}
+
+function serialError(err) {
+  print("ERROR: " + err);
+}
+
+function portClose() {
+  print("SERIAL PORT CLOSED");
 }
